@@ -13,7 +13,6 @@ import (
 	"net/http"
 	"os"
 	"stepbystep.com/m/graph"
-	"stepbystep.com/m/graph/model"
 )
 
 const defaultPort = "8080"
@@ -50,8 +49,8 @@ func main() {
 
 	// Migrate the schema
 	err = db.AutoMigrate(
-		&model.Todo{},
-		&model.User{})
+		&graph.Todo{},
+		&graph.User{})
 	if err != nil {
 		log.Fatal("Failed to migrate schema:", err)
 	}

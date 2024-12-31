@@ -1,11 +1,17 @@
 package graph
 
-import "stepbystep.com/m/graph/model"
+import "gorm.io/gorm"
 
 // This file will not be regenerated automatically.
 //
 // It serves as dependency injection for your app, add any dependencies you require here.
 
-var listOfTodos []*model.Todo
+type Resolver struct {
+	Db *gorm.DB
+}
 
-type Resolver struct{}
+func NewResolver(db *gorm.DB) *Resolver {
+	return &Resolver{
+		Db: db,
+	}
+}

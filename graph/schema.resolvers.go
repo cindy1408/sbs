@@ -6,75 +6,94 @@ package graph
 
 import (
 	"context"
-	"slices"
+	"fmt"
 
+	"github.com/google/uuid"
 	"stepbystep.com/m/graph/model"
 )
 
-// CreateTodo is the resolver for the createTodo field.
 func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error) {
-	user := &model.User{
-		ID:   input.UserID,
-		Name: "Baba",
+	var user model.User
+
+	// Fetch the User to ensure it exists
+	if err := r.Db.First(&user, "id = ?", input.UserID).Error; err != nil {
+		return nil, fmt.Errorf("user not found: %w", err)
 	}
 
-	listOfTodos = append(listOfTodos, &model.Todo{
-		ID:   input.UserID,
-		Text: input.Text,
-		Done: false,
-		User: user,
-	})
+	// Create the Todo object and associate it with the User
+	todo := &model.Todo{
+		ID:     uuid.NewString(),
+		Text:   input.Text,
+		Done:   false,
+		UserID: input.UserID,
+		User:   &user, // Associate the User object directly with the Todo
+	}
 
-	return &model.Todo{
-		ID:   input.UserID,
-		Text: input.Text,
-		Done: false,
-		User: user,
-	}, nil
+	// Create the Todo in the database
+	if result := r.Db.Create(todo); result.Error != nil {
+		return nil, result.Error
+	}
+
+	return todo, nil
 }
 
 // DeleteTodo is the resolver for the deleteTodo field.
 func (r *mutationResolver) DeleteTodo(ctx context.Context, input string) (string, error) {
-	for i, todo := range listOfTodos {
-		if todo.ID == input {
-			slices.Delete(listOfTodos, i, i+1)
-			return "successfully deleted", nil
-		}
+	row := r.Db.Delete(&model.Todo{}, input)
+
+	if row.RowsAffected == 0 {
+		return "", fmt.Errorf("unable to delete")
 	}
 
-	return "unable to delete", nil
+	return "deleted successfully", nil
 }
 
 // UpdateTodo is the resolver for the updateTodo field.
 func (r *mutationResolver) UpdateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error) {
-	user := &model.User{
-		ID:   input.UserID,
-		Name: "Baba",
-	}
-
-	for i, todo := range listOfTodos {
-		if todo.ID == input.UserID {
-			slices.Delete(listOfTodos, i, i+1)
-			listOfTodos = append(listOfTodos, &model.Todo{
-				ID:   input.UserID,
-				Text: input.Text,
-				Done: false,
-				User: user,
-			})
-		}
+	row := r.Db.Save(&input)
+	if row.RowsAffected == 0 {
+		return nil, fmt.Errorf("unable to update")
 	}
 
 	return &model.Todo{
 		ID:   input.UserID,
 		Text: input.Text,
 		Done: false,
-		User: user,
 	}, nil
+}
+
+// CreateUser is the resolver for the createUser field.
+func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*model.User, error) {
+	user := &model.User{
+		ID:   input.ID,
+		Name: input.Name,
+	}
+
+	if r.Db == nil {
+		return nil, fmt.Errorf("no db")
+	}
+	result := r.Db.Create(user)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return user, nil
 }
 
 // Todos is the resolver for the todos field.
 func (r *queryResolver) Todos(ctx context.Context) ([]*model.Todo, error) {
-	return listOfTodos, nil
+	var todos []*model.Todo
+
+	result := r.Db.Find(&todos)
+	if result.Error != nil {
+		return nil, fmt.Errorf("error querying todos: %w", result.Error)
+	}
+
+	if result.RowsAffected == 0 {
+		return nil, fmt.Errorf("no rows returned")
+	}
+
+	return todos, nil
 }
 
 // Mutation returns MutationResolver implementation.

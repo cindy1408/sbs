@@ -6,31 +6,75 @@ package graph
 
 import (
 	"context"
-	"fmt"
+	"slices"
+
 	"stepbystep.com/m/graph/model"
 )
 
 // CreateTodo is the resolver for the createTodo field.
 func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error) {
-
 	user := &model.User{
 		ID:   input.UserID,
 		Name: "Baba",
 	}
 
-	todo := &model.Todo{
+	listOfTodos = append(listOfTodos, &model.Todo{
 		ID:   input.UserID,
 		Text: input.Text,
 		Done: false,
 		User: user,
+	})
+
+	return &model.Todo{
+		ID:   input.UserID,
+		Text: input.Text,
+		Done: false,
+		User: user,
+	}, nil
+}
+
+// DeleteTodo is the resolver for the deleteTodo field.
+func (r *mutationResolver) DeleteTodo(ctx context.Context, input string) (string, error) {
+	for i, todo := range listOfTodos {
+		if todo.ID == input {
+			slices.Delete(listOfTodos, i, i+1)
+			return "successfully deleted", nil
+		}
 	}
 
-	return todo, nil
+	return "unable to delete", nil
+}
+
+// UpdateTodo is the resolver for the updateTodo field.
+func (r *mutationResolver) UpdateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error) {
+	user := &model.User{
+		ID:   input.UserID,
+		Name: "Baba",
+	}
+
+	for i, todo := range listOfTodos {
+		if todo.ID == input.UserID {
+			slices.Delete(listOfTodos, i, i+1)
+			listOfTodos = append(listOfTodos, &model.Todo{
+				ID:   input.UserID,
+				Text: input.Text,
+				Done: false,
+				User: user,
+			})
+		}
+	}
+
+	return &model.Todo{
+		ID:   input.UserID,
+		Text: input.Text,
+		Done: false,
+		User: user,
+	}, nil
 }
 
 // Todos is the resolver for the todos field.
 func (r *queryResolver) Todos(ctx context.Context) ([]*model.Todo, error) {
-	panic(fmt.Errorf("not implemented: Todos - todos"))
+	return listOfTodos, nil
 }
 
 // Mutation returns MutationResolver implementation.

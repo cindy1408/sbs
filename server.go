@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"stepbystep.com/m/graph/model"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
@@ -15,6 +16,8 @@ import (
 )
 
 const defaultPort = "8080"
+
+var listOfTodos []*model.Todo
 
 func main() {
 	port := os.Getenv("PORT")

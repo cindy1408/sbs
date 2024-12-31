@@ -21,7 +21,6 @@ func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) 
 		return nil, fmt.Errorf("user not found: %w", err)
 	}
 
-	// Create the Todo object and associate it with the User
 	todo := &model.Todo{
 		ID:   uuid.NewString(),
 		Text: input.Text,
@@ -32,7 +31,6 @@ func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) 
 		},
 	}
 
-	// Create the Todo in the database
 	if result := r.Db.Create(todo); result.Error != nil {
 		return nil, result.Error
 	}
@@ -56,21 +54,17 @@ func (r *mutationResolver) DeleteTodo(ctx context.Context, input string) (string
 
 // UpdateTodo is the resolver for the updateTodo field.
 func (r *mutationResolver) UpdateTodo(ctx context.Context, input model.UpdateTodo) (*model.Todo, error) {
-	// Fetch the existing Todo based on ID
 	var todo Todo
 	if err := r.Db.First(&todo, "id = ?", input.ID).Error; err != nil {
 		return nil, fmt.Errorf("todo not found: %w", err) // Handle if the Todo does not exist
 	}
 
-	// Update the fields that can be modified
 	todo.Text = input.Text
 
-	// Save the updated Todo
 	if err := r.Db.Save(&todo).Error; err != nil {
 		return nil, fmt.Errorf("unable to update todo: %w", err)
 	}
 
-	// Return the updated Todo
 	return &model.Todo{
 		ID:   todo.ID,
 		Text: todo.Text,
